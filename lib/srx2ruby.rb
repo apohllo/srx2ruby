@@ -103,7 +103,7 @@ result2 =<<-END
       buffer_length = 10
       sentence = ""
       before_buffer = ""
-      after_buffer = buffer_length.times.map{|i| @input.readchar}.join("")
+      after_buffer = buffer_length.times.map{|i| @input.getc}.join("")
       matched_rule = nil
       while(!@input.eof?) do
         matched_before = BEFORE_RE.match(before_buffer)
@@ -131,7 +131,7 @@ result2 =<<-END
             end
           end
         end
-        next_after = @input.readchar
+        next_after = @input.getc
         before_buffer.sub!(FIRST_CHAR,"") if before_buffer.size >= buffer_length
         after_buffer.sub!(FIRST_CHAR,"")
         before_buffer << $&

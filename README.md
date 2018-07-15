@@ -43,7 +43,14 @@ srx2ruby -h
 
 Example rules for some languages (including English) are available on LanguageTool site:
 
-  * https://raw.githubusercontent.com/languagetool-org/languagetool/master/languagetool-core/src/main/resources/org/languagetool/resource/segment.srx
+  * [segment.srx](https://raw.githubusercontent.com/languagetool-org/languagetool/master/languagetool-core/src/main/resources/org/languagetool/resource/segment.srx)
+
+## AVAILABLE GEMS
+
+There are the following gems available with generated rules:
+
+* [srx-polish](https://github.com/apohllo/srx-polish)
+* [srx-english](https://github.com/apohllo/srx-english)
 
 ## LICENSE
 

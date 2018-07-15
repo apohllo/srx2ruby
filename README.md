@@ -17,26 +17,33 @@ runnable Ruby code.
 
 Standard installation from rubygems:
 
-  $ gem install srx2ruby
+```
+gem install srx2ruby
+```
 
 ## BASIC USAGE
 
 Invoke the script with the following parameters:
 
-  $ srx2ruby -f rules.srx [-o path] -l Language -r LanguageRuleSet1 [-r LanguageRuleSet2...]
+```
+srx2ruby -f rules.srx [-o path] -l Language -r LanguageRuleSet1 [-r LanguageRuleSet2...]
+```
 
 For instance:
 
-  $ srx2ruby -f segment.srx -l Polish -r Polish -r ByLineBreak
+```
+srx2ruby -f segment.srx -l Polish -r Polish -r ByLineBreak
+```
 
 `-h` flag gives you help with full description of the options:
 
-  $ srx2ruby -h
+```
+srx2ruby -h
+```
 
-Example rules for some languages (including English) are available on Marcin
-Mikłowski's site:
+Example rules for some languages (including English) are available on LanguageTool site:
 
-  * http://morfologik.blogspot.com/2009/11/talking-about-srx-in-lt-during-ltc.html
+  * https://raw.githubusercontent.com/languagetool-org/languagetool/master/languagetool-core/src/main/resources/org/languagetool/resource/segment.srx
 
 ## LICENSE
 

@@ -1,40 +1,44 @@
-== srx2ruby
+# srx2ruby
 
 * https://github.com/apohllo/srx2ruby
 
-= DESCRIPTION
+## DESCRIPTION
 
 'srx2ruby' is a script changing SRX rules for breaking sentences into
 runnable Ruby code.
 
-= FEATURES/PROBLEMS
+## FEATURES/PROBLEMS
 
 * this code "should work" but is not 100% SRX compliant
 * some optimisations are present, but don't expect highest performance
 * language selection rules are not SRX compliant
 
-= INSTALL
+## INSTALL
 
 Standard installation from rubygems:
 
   $ gem install srx2ruby
 
-== BASIC USAGE
+## BASIC USAGE
 
 Invoke the script with the following parameters:
 
-  $ srx2ruby rules.srx output.rb LanguageRuleSet1 [LanguageRuleSet2...]
+  $ srx2ruby -f rules.srx [-o path] -l Language -r LanguageRuleSet1 [-r LanguageRuleSet2...]
 
 For instance:
 
-  $ srx2ruby segment.srx srx-polish.rb Polish ByLineBreak
+  $ srx2ruby -f segment.srx -l Polish -r Polish -r ByLineBreak
+
+`-h` flag gives you help with full description of the options:
+
+  $ srx2ruby -h
 
 Example rules for some languages (including English) are available on Marcin
 Mikłowski's site:
 
   * http://morfologik.blogspot.com/2009/11/talking-about-srx-in-lt-during-ltc.html
 
-== LICENSE
+## LICENSE
 
 (The MIT License)
 
@@ -59,6 +63,6 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-== FEEDBACK
+## FEEDBACK
 
 * mailto:apohllo@o2.pl

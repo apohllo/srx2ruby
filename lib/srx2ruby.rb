@@ -2,19 +2,26 @@
 # encoding: utf-8
 require 'rexml/document'
 require 'pp'
+require 'slop'
 include REXML
 
-
-if ARGV.size < 3
-  puts "Usage: srx2ruby rules_file.srx output.rb LanguageRuleSet1 [LanguageRuleSet2 ...]"
-  puts "rules_file.srx   - file with SRX rules"
-  puts "output.rb        - the file with Ruby code implementing the breaking rules"
-  puts "LanguageRuleSet* - selected language rules"
+begin
+  opts = Slop.parse do |o|
+    o.separator 'Convert SRX rules file to runnable Ruby library.'
+    o.separator 'Options:'
+    o.string '-f', '--input', 'file with SRX segmentation rules', required: true
+    o.string '-l', '--language', 'the name of the Ruby module (inside SRX) as well as the output files'
+    o.string '-o', '--output', 'output directory (current directory by default)', default: '.'
+    o.array '-r', '--ruleset', 'selected language rules (multiple rulesets allowed)'
+    o.on '-h', '--help', 'print help' do puts o; exit; end
+  end
+rescue Slop::Error => ex
+  puts ex
   exit
 end
 
 xml = nil
-File.open(ARGV[0]) do |input|
+File.open(opts[:input]) do |input|
   xml = Document.new(input)
 end
 
@@ -28,7 +35,7 @@ GROUP_RE = /\(\?iu\)/
 DASH_RE = /(\[(?:[^\]]|\\\])+)-(–(?:[^\]]|\\\])+)\]/
 
 xml.each_element('//languagerule/') do |language|
-  next unless ARGV[2..-1].include?(language.attributes['languagerulename'])
+  next unless opts[:language].include?(language.attributes['languagerulename'])
   puts language.attributes['languagerulename']
   language.each_element('rule') do |rule|
     should_break = rule.attributes['break'] == "yes"
@@ -49,8 +56,9 @@ xml.each_element('//languagerule/') do |language|
       re = "(#{before})(#{after})"
       /(?:(#{before})(#{after}))/
       RULES << [before,after,should_break]
-    rescue RegexpError => ex
-      puts ex
+    rescue RegexpError, ArgumentError => ex
+      puts "Error: #{ex}"
+      puts rule.to_s
       invalid_rules += 1
     end
   end
@@ -72,79 +80,34 @@ CONSOLIDATED_RULES.map! do |hash|
   end.join("|")
   [rule_s_union,rule_e,value]
 end
-puts "Breaking/nonbreaking #{breaking_rules}/#{nonbreaking_rules}/#{invalid_rules}"
+puts "Breaking/nonbreaking/errors #{breaking_rules}/#{nonbreaking_rules}/#{invalid_rules}"
 
-result1=<<-END
-#encoding: utf-8
-require 'stringio'
-require 'term/ansicolor'
+capitalized_language = opts[:language][0].upcase + opts[:language][1..-1].downcase
+downcase_language = opts[:language].downcase
+
+File.open("#{opts[:output]}/#{downcase_language}-rules.rb","w") do |out|
+  out.puts <<-END
 module SRX
-  RULES =
-END
-result2 =<<-END
-  BEFORE_RE = /(?:\#{RULES.map{|s,e,v| "(\#{s})"}.join("|")})\\Z/m
-  REGEXPS = RULES.map{|s,e,v| [/(\#{s})\\Z/m,/\\A(\#{e})/m,v] }
-  FIRST_CHAR = /\\A./m
+  module #{capitalized_language}
+    module Rules
+      def rules
+        @@rules ||=
+  END
 
+  PP.pp(CONSOLIDATED_RULES,out)
 
-  class Sentence
-    attr_accessor :input
-    attr_writer :debug
-
-    def initialize(text=nil)
-      if text.is_a?(String)
-        @input = StringIO.new(text,"r:utf-8")
-      else
-        @input = text
+  out.puts <<-END
       end
-    end
-
-    def each
-      buffer_length = 10
-      sentence = ""
-      before_buffer = ""
-      after_buffer = buffer_length.times.map{|i| @input.getc}.join("")
-      matched_rule = nil
-      while(!@input.eof?) do
-        matched_before = BEFORE_RE.match(before_buffer)
-        break_detected = false
-        if matched_before
-          start_index = (matched_before.size - 1).times.find do |index|
-            matched_before[index+1]
-          end
-          if @debug
-            puts "\#{before_buffer}|\#{after_buffer.gsub(/\\n/,"\\\\n")}"
-          end
-          REGEXPS.each do |before_re,after_re,value|
-            # skip the whole match
-            if before_re.match(before_buffer) && after_re.match(after_buffer)
-              break_detected = true
-              color = value ? :red : :green
-              if @debug
-                sentence << Term::ANSIColor.send(color,"<\#{before_re}:\#{after_re}>")
-              end
-              if value
-                yield sentence
-                sentence = ""
-              end
-              break
-            end
-          end
-        end
-        next_after = @input.getc
-        before_buffer.sub!(FIRST_CHAR,"") if before_buffer.size >= buffer_length
-        after_buffer.sub!(FIRST_CHAR,"")
-        before_buffer << $&
-        sentence << $&
-        after_buffer << next_after
-      end
-      yield sentence + after_buffer unless sentence.empty? || after_buffer.empty?
     end
   end
 end
-END
-File.open(ARGV[1],"w") do |out|
-  out.puts(result1)
-  PP.pp(CONSOLIDATED_RULES,out)
-  out.puts(result2)
+  END
+end
+
+File.open("#{opts[:output]}/srx-#{downcase_language}.rb","w") do |out|
+  template = File.read(File.dirname(__FILE__) + "/srx-template.rb")
+  out.puts template.
+    sub(/^# REQUIRE/m, "require_relative '#{downcase_language}-rules'").
+    sub(/^# MODULE-START/m, "  module #{capitalized_language}\n    extend Rules").
+    sub(/^# MODULE-END/m, "  end")
 end
